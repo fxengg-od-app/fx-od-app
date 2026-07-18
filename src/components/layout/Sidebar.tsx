@@ -9,6 +9,9 @@ import {
   MdAnalytics,
   MdPerson,
   MdExitToApp,
+  MdCloudUpload,
+  MdStorage,
+  MdOutlineBackup,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -43,6 +46,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           { name: 'Approved History', path: '/hod/history', icon: MdHistory },
           { name: 'Analytics', path: '/analytics', icon: MdAnalytics },
           { name: 'Profile', path: '/profile', icon: MdPerson },
+        ];
+      case 'ADMIN':
+        return [
+          { name: 'Dashboard', path: '/dashboard', icon: MdDashboard },
+          { name: 'Upload Mass Data', path: '/super-admin/upload', icon: MdCloudUpload },
+          { name: 'Manage Mass Data', path: '/super-admin/manage', icon: MdStorage },
+          { name: 'Backup Database', path: '/super-admin/backup', icon: MdOutlineBackup },
         ];
       default:
         return [{ name: 'Dashboard', path: '/dashboard', icon: MdDashboard }];

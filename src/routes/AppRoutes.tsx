@@ -12,6 +12,9 @@ import { HODPendingApprovals as HODPending } from '../pages/HOD/PendingApprovals
 import { HODHistory } from '../pages/HOD/ApprovedHistory';
 import { Analytics } from '../pages/Analytics/Analytics';
 import { Profile } from '../pages/Profile/Profile';
+import { UploadMassData } from '../pages/SuperAdmin/UploadMassData';
+import { ManageMassData } from '../pages/SuperAdmin/ManageMassData';
+import { BackupDatabase } from '../pages/SuperAdmin/BackupDatabase';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -31,6 +34,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="/hod/history" element={<HODHistory />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/profile" element={<Profile />} />
+        
+        {/* Super Admin Routes */}
+        <Route path="/super-admin/upload" element={<UploadMassData />} />
+        <Route path="/super-admin/manage" element={<ManageMassData />} />
+        <Route path="/super-admin/backup" element={<BackupDatabase />} />
       </Route>
 
       {/* Fallback Catch-All */}

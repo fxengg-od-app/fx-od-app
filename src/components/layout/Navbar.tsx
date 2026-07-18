@@ -51,11 +51,12 @@ export const Navbar: React.FC<{ onToggleSidebar: () => void }> = ({ onToggleSide
             <option value="STUDENT" className="dark:bg-zinc-900">Student</option>
             <option value="MENTOR" className="dark:bg-zinc-900">Mentor</option>
             <option value="HOD" className="dark:bg-zinc-900">HOD</option>
+            <option value="ADMIN" className="dark:bg-zinc-900">Super Admin</option>
           </select>
         </div>
 
         {/* User Info */}
-        <div className="flex items-center gap-2 border-l border-gray-100 dark:border-zinc-800 pl-4">
+        <div className="flex items-center gap-4 border-l border-gray-100 dark:border-zinc-800 pl-4">
           <FaUserCircle className="h-6 w-6 text-gray-400" />
           <div className="hidden sm:block text-left">
             <p className="text-xs font-semibold text-gray-850 dark:text-zinc-200">
@@ -63,9 +64,13 @@ export const Navbar: React.FC<{ onToggleSidebar: () => void }> = ({ onToggleSide
                 ? 'Arun Kumar K'
                 : currentRole === 'MENTOR'
                 ? 'Mrs. R. Jeyanthi'
-                : 'Dr. S. Premkumar'}
+                : currentRole === 'HOD'
+                ? 'Dr. S. Premkumar'
+                : 'Super Admin'}
             </p>
-            <p className="text-[10px] text-gray-400 font-medium uppercase">{currentRole}</p>
+            <p className="text-[10px] text-gray-400 font-medium uppercase">
+              {currentRole === 'ADMIN' ? 'SUPER ADMIN' : currentRole}
+            </p>
           </div>
         </div>
       </div>
