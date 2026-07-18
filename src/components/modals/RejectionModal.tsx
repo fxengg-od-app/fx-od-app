@@ -43,7 +43,7 @@ export const RejectionModal: React.FC<RejectionModalProps> = ({
           rows={4}
           required
         />
-        <div className="flex justify-end gap-3 pt-3 border-t border-gray-150 dark:border-zinc-800">
+        <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>

@@ -64,10 +64,10 @@ export const HODPendingApprovals: React.FC = () => {
     <div className="space-y-6 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-zinc-100 m-0">
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900 m-0">
             HOD Pending Approvals
           </h1>
-          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Review, check mentor status, and process OD requests. Approve/Reject individually or in bulk.
           </p>
         </div>
