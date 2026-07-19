@@ -17,6 +17,7 @@ import type {
   CreateODDTO,
   TimelineEntry,
   ApprovalSnapshot,
+  ODStatus,
 } from '../../types/od';
 import type { UserProfile, Department } from '../../types/user';
 import { logAudit } from './auditService';
@@ -53,6 +54,22 @@ export const createODRequest = async (
   });
 
   try {
+    // Backend Date Validation (Today to Next 60 days)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(dto.startDate);
+    start.setHours(0, 0, 0, 0);
+    if (start < today) {
+      throw new Error('OD start date cannot be in the past.');
+    }
+
+    const max60Days = new Date();
+    max60Days.setDate(max60Days.getDate() + 60);
+    max60Days.setHours(23, 59, 59, 999);
+    if (start > max60Days) {
+      throw new Error('OD start date cannot be more than 60 calendar days in advance.');
+    }
+
     let mentorUid = student.mentorUid;
     let mentorName = student.mentorName || 'Faculty Mentor';
     let mentorEmail = student.mentorEmail;
@@ -721,15 +738,162 @@ export const fetchAllODRequests = async (): Promise<ODRequest[]> => {
     );
     const snap = await getDocs(q);
     const list = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as ODRequest[];
-    return list.sort((a, b) => {
+    const sorted = list.sort((a, b) => {
       const tA = a.createdAt ? new Date(a.createdAt as any).getTime() : 0;
       const tB = b.createdAt ? new Date(b.createdAt as any).getTime() : 0;
       return tB - tA;
     });
+    return checkAndExpireODRequests(sorted);
   } catch (error) {
     console.error('Error fetching all OD requests:', error);
     return [];
   }
+};
+
+export const checkAndExpireODRequests = async (requests: ODRequest[]): Promise<ODRequest[]> => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const expiredPromises: Promise<void>[] = [];
+
+  const updatedRequests = requests.map((req) => {
+    if (req.status === 'PENDING' || req.status === 'MENTOR_APPROVED') {
+      const targetDate = req.endDate || req.startDate;
+      if (targetDate && targetDate < todayStr) {
+        expiredPromises.push(
+          (async () => {
+            try {
+              const reqRef = doc(db, 'od_requests', req.id);
+              const now = new Date().toISOString();
+              const expiredTimeline: TimelineEntry = {
+                id: `tl-${Date.now()}`,
+                action: 'OD Request Expired (Date Passed)',
+                performedBy: { uid: 'system', name: 'System Auto-Expiry', role: 'SYSTEM' },
+                timestamp: now,
+                details: `OD date (${targetDate}) passed prior to final sanction.`,
+              };
+
+              const cleanData = sanitizeFirestoreData({
+                status: 'EXPIRED',
+                timeline: arrayUnion(expiredTimeline),
+                updatedAt: serverTimestamp(),
+              });
+
+              await updateDoc(reqRef, cleanData);
+
+              sendNotification(
+                req.studentUid,
+                { uid: 'system', name: 'System Auto-Expiry', role: 'SYSTEM' },
+                'OD Request Expired',
+                `Your OD application (${req.requestNumber}) expired because its scheduled date (${targetDate}) passed prior to final sanction.`,
+                '/student/requests',
+                'SYSTEM',
+                req.id
+              ).catch(console.error);
+
+              if (req.assignedMentorUid) {
+                sendNotification(
+                  req.assignedMentorUid,
+                  { uid: 'system', name: 'System Auto-Expiry', role: 'SYSTEM' },
+                  'Assigned OD Expired',
+                  `OD request (${req.requestNumber}) for ${req.studentSnapshot?.name} expired as scheduled date passed.`,
+                  '/mentor/history',
+                  'SYSTEM',
+                  req.id
+                ).catch(console.error);
+              }
+            } catch (err) {
+              console.error('Error auto-expiring OD request:', req.id, err);
+            }
+          })()
+        );
+
+        return { ...req, status: 'EXPIRED' as ODStatus };
+      }
+    }
+    return req;
+  });
+
+  if (expiredPromises.length > 0) {
+    Promise.all(expiredPromises).catch(console.error);
+  }
+
+  return updatedRequests;
+};
+
+export const withdrawODRequest = async (
+  requestId: string,
+  studentUser: UserProfile
+): Promise<void> => {
+  const reqRef = doc(db, 'od_requests', requestId);
+  const snap = await getDoc(reqRef);
+
+  if (!snap.exists()) {
+    throw new Error('OD Request not found.');
+  }
+
+  const reqData = snap.data() as ODRequest;
+  if (reqData.studentUid !== studentUser.uid) {
+    throw new Error('Only the student who created this OD application may withdraw it.');
+  }
+
+  if (reqData.status === 'WITHDRAWN' || reqData.status === 'EXPIRED') {
+    throw new Error(`This application is already ${reqData.status.toLowerCase()}.`);
+  }
+
+  const now = new Date().toISOString();
+  const withdrawTimeline: TimelineEntry = {
+    id: `tl-${Date.now()}`,
+    action: 'OD Request Withdrawn by Student',
+    performedBy: {
+      uid: studentUser.uid,
+      name: studentUser.displayName,
+      role: studentUser.role,
+    },
+    timestamp: now,
+  };
+
+  const cleanData = sanitizeFirestoreData({
+    status: 'WITHDRAWN',
+    timeline: arrayUnion(withdrawTimeline),
+    updatedAt: serverTimestamp(),
+    updatedBy: studentUser.uid,
+  });
+
+  await updateDoc(reqRef, cleanData);
+
+  if (reqData.assignedMentorUid) {
+    sendNotification(
+      reqData.assignedMentorUid,
+      { uid: studentUser.uid, name: studentUser.displayName, role: studentUser.role },
+      'OD Request Withdrawn',
+      `${studentUser.displayName} has withdrawn OD request (${reqData.requestNumber}).`,
+      '/mentor/history',
+      'STATUS_UPDATE',
+      requestId
+    ).catch(console.error);
+  }
+
+  fetchHODsByDepartment(reqData.department)
+    .then((hods) => {
+      hods.forEach((hod) => {
+        sendNotification(
+          hod.uid,
+          { uid: studentUser.uid, name: studentUser.displayName, role: studentUser.role },
+          'OD Request Withdrawn',
+          `${studentUser.displayName} (${reqData.department}) has withdrawn OD request (${reqData.requestNumber}).`,
+          '/hod/history',
+          'STATUS_UPDATE',
+          requestId
+        ).catch(console.error);
+      });
+    })
+    .catch(console.error);
+
+  await logAudit(
+    'USER_UPDATED',
+    { uid: studentUser.uid, name: studentUser.displayName, email: studentUser.email, role: studentUser.role },
+    { action: 'OD_WITHDRAWN', requestId, requestNumber: reqData.requestNumber },
+    { collection: 'od_requests', id: requestId }
+  );
 };
 
 export const fetchAuditLogs = async () => {

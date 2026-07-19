@@ -59,6 +59,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, isMobileDrawer = f
       case 'ACADEMIC_COORDINATOR':
         return [
           { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/analytics', label: 'Analytics', icon: PieChart },
+          { to: '/admin/history', label: 'Historical ODs', icon: History },
           { to: '/admin/users', label: 'User Management', icon: UserCheck },
           { to: '/admin/audit', label: 'Audit Logs', icon: ShieldCheck },
           { to: '/profile', label: 'Settings', icon: Settings },
@@ -72,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, isMobileDrawer = f
 
   const containerClasses = isMobileDrawer
     ? 'w-full h-full bg-[#0B426E] text-white p-4 flex flex-col justify-between overflow-y-auto'
-    : 'w-60 bg-[#0B426E] text-white min-h-[calc(100vh-61px)] p-3 flex flex-col justify-between hidden md:flex shrink-0 shadow-md';
+    : 'w-60 bg-[#0B426E] text-white h-full overflow-y-auto p-3 flex flex-col justify-between hidden md:flex shrink-0 shadow-md';
 
   return (
     <aside className={containerClasses}>

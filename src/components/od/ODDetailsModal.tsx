@@ -28,6 +28,10 @@ export const ODDetailsModal: React.FC<ODDetailsModalProps> = ({
         return <Badge variant="danger">Rejected by Mentor</Badge>;
       case 'HOD_REJECTED':
         return <Badge variant="danger">Rejected by HOD</Badge>;
+      case 'EXPIRED':
+        return <Badge variant="neutral">Expired (Date Passed)</Badge>;
+      case 'WITHDRAWN':
+        return <Badge variant="neutral">Withdrawn by Student</Badge>;
       default:
         return <Badge variant="warning">Pending Mentor Review</Badge>;
     }

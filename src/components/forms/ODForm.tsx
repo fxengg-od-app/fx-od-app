@@ -132,6 +132,8 @@ export const ODForm: React.FC<ODFormProps> = ({ onSuccess, onCancel }) => {
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             error={errors.startDate}
+            min={new Date().toISOString().split('T')[0]}
+            max={new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
             disabled={!dateType}
           />
           {dateType === 'MULTIPLE' && (
@@ -141,7 +143,8 @@ export const ODForm: React.FC<ODFormProps> = ({ onSuccess, onCancel }) => {
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               error={errors.endDate}
-              min={startDate}
+              min={startDate || new Date().toISOString().split('T')[0]}
+              max={new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
               disabled={!dateType}
             />
           )}

@@ -11,6 +11,7 @@ import {
   hodReviewODRequest,
   bulkHODApproveODRequests,
   bulkHODRejectODRequests,
+  withdrawODRequest,
 } from '../services/firebase/odService';
 import type { CreateODDTO } from '../types/od';
 import type { UserProfile, Department } from '../types/user';
@@ -85,6 +86,17 @@ export const useCreateODMutation = () => {
   return useMutation({
     mutationFn: ({ dto, student }: { dto: CreateODDTO; student: UserProfile }) =>
       createODRequest(dto, student),
+    onSuccess: () => {
+      invalidateAllWorkflowQueries(queryClient);
+    },
+  });
+};
+
+export const useWithdrawODMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ requestId, student }: { requestId: string; student: UserProfile }) =>
+      withdrawODRequest(requestId, student),
     onSuccess: () => {
       invalidateAllWorkflowQueries(queryClient);
     },

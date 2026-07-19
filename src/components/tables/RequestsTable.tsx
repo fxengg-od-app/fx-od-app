@@ -1,21 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Eye, Calendar, User } from 'lucide-react';
+import { Eye, Calendar, User, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { ODRequest } from '../../types/od';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { ODDetailsModal } from '../od/ODDetailsModal';
+import { Pagination } from '../common/Pagination';
 
 interface RequestsTableProps {
   requests: ODRequest[];
   showStudentDetails?: boolean;
 }
 
+type SortColumn = 'requestNumber' | 'studentName' | 'odType' | 'startDate' | 'facultyInCharge' | 'status';
+
 export const RequestsTable: React.FC<RequestsTableProps> = ({
   requests,
   showStudentDetails = false,
 }) => {
   const [selectedViewRequest, setSelectedViewRequest] = useState<ODRequest | null>(null);
+  const [sortColumn, setSortColumn] = useState<SortColumn>('startDate');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [searchParams] = useSearchParams();
   const highlightedId = searchParams.get('highlight') || searchParams.get('odId');
 
@@ -29,9 +37,71 @@ export const RequestsTable: React.FC<RequestsTableProps> = ({
         return <Badge variant="danger">Rejected by Mentor</Badge>;
       case 'HOD_REJECTED':
         return <Badge variant="danger">Rejected by HOD</Badge>;
+      case 'EXPIRED':
+        return <Badge variant="neutral">Expired</Badge>;
+      case 'WITHDRAWN':
+        return <Badge variant="neutral">Withdrawn</Badge>;
       default:
         return <Badge variant="warning">Pending Mentor</Badge>;
     }
+  };
+
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => {
+      let valA: string = '';
+      let valB: string = '';
+
+      if (sortColumn === 'requestNumber') {
+        valA = a.requestNumber || a.id || '';
+        valB = b.requestNumber || b.id || '';
+      } else if (sortColumn === 'studentName') {
+        valA = a.studentSnapshot?.name || '';
+        valB = b.studentSnapshot?.name || '';
+      } else if (sortColumn === 'odType') {
+        valA = a.odType || '';
+        valB = b.odType || '';
+      } else if (sortColumn === 'startDate') {
+        valA = a.startDate || '';
+        valB = b.startDate || '';
+      } else if (sortColumn === 'facultyInCharge') {
+        valA = a.facultyInCharge || '';
+        valB = b.facultyInCharge || '';
+      } else if (sortColumn === 'status') {
+        valA = a.status || '';
+        valB = b.status || '';
+      }
+
+      valA = valA.toLowerCase();
+      valB = valB.toLowerCase();
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [requests, sortColumn, sortDirection]);
+
+  const totalPages = Math.ceil(sortedRequests.length / pageSize) || 1;
+  const paginatedRequests = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedRequests.slice(start, start + pageSize);
+  }, [sortedRequests, currentPage, pageSize]);
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (col: SortColumn) => {
+    if (sortColumn !== col) return <ArrowUpDown className="w-3 h-3 opacity-40 ml-1 inline" />;
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="w-3 h-3 text-[#0B426E] ml-1 inline" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-[#0B426E] ml-1 inline" />
+    );
   };
 
   if (requests.length === 0) {
@@ -43,10 +113,10 @@ export const RequestsTable: React.FC<RequestsTableProps> = ({
   }
 
   return (
-    <>
+    <div className="space-y-3">
       {/* Mobile Stacked Card View (< md) */}
       <div className="space-y-3 md:hidden">
-        {requests.map((req) => {
+        {paginatedRequests.map((req) => {
           const isHighlighted = req.id === highlightedId;
           return (
             <div
@@ -117,18 +187,32 @@ export const RequestsTable: React.FC<RequestsTableProps> = ({
       <div className="hidden md:block overflow-x-auto bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 uppercase font-semibold text-[11px] tracking-wider">
-              <th className="p-3">Req No</th>
-              {showStudentDetails && <th className="p-3">Student</th>}
-              <th className="p-3">Category</th>
-              <th className="p-3">Schedule</th>
-              <th className="p-3">Faculty In Charge</th>
-              <th className="p-3">Status</th>
+            <tr className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 uppercase font-semibold text-[11px] tracking-wider select-none">
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('requestNumber')}>
+                Req No {renderSortIcon('requestNumber')}
+              </th>
+              {showStudentDetails && (
+                <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('studentName')}>
+                  Student {renderSortIcon('studentName')}
+                </th>
+              )}
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('odType')}>
+                Category {renderSortIcon('odType')}
+              </th>
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('startDate')}>
+                Schedule {renderSortIcon('startDate')}
+              </th>
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('facultyInCharge')}>
+                Faculty In Charge {renderSortIcon('facultyInCharge')}
+              </th>
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('status')}>
+                Status {renderSortIcon('status')}
+              </th>
               <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60 text-gray-700 dark:text-gray-200">
-            {requests.map((req) => {
+            {paginatedRequests.map((req) => {
               const isHighlighted = req.id === highlightedId;
               return (
                 <tr
@@ -177,11 +261,24 @@ export const RequestsTable: React.FC<RequestsTableProps> = ({
         </table>
       </div>
 
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedRequests.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
+        pageSizeOptions={[10, 25, 50]}
+      />
+
       <ODDetailsModal
         isOpen={!!selectedViewRequest}
         onClose={() => setSelectedViewRequest(null)}
         request={selectedViewRequest}
       />
-    </>
+    </div>
   );
 };

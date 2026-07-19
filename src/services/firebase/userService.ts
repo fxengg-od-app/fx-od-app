@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -45,6 +46,22 @@ export const fetchMentorsByDepartment = async (
     return snap.docs.map((d) => ({ ...d.data() })) as UserProfile[];
   } catch (error) {
     console.error('Error fetching mentors by department:', error);
+    return [];
+  }
+};
+
+export const fetchAllMentors = async (): Promise<UserProfile[]> => {
+  try {
+    const q = query(
+      collection(db, 'users'),
+      where('role', '==', 'MENTOR'),
+      where('isDeleted', '==', false)
+    );
+    const snap = await getDocs(q);
+    const list = snap.docs.map((d) => ({ ...d.data() })) as UserProfile[];
+    return list.sort((a, b) => a.displayName.localeCompare(b.displayName));
+  } catch (error) {
+    console.error('Error fetching all mentors:', error);
     return [];
   }
 };
@@ -186,6 +203,66 @@ export const syncMentorUIDsForStudents = async (
   }
 };
 
+export const unassignStudentsOfDeletedMentor = async (
+  mentorUid: string,
+  mentorEmail: string,
+  performedBy: { uid: string; name: string; email: string; role: string }
+): Promise<number> => {
+  try {
+    const studentsMap = new Map<string, string>(); // studentDocId -> studentDocId
+
+    if (mentorUid) {
+      const q1 = query(
+        collection(db, 'users'),
+        where('mentorUid', '==', mentorUid),
+        where('isDeleted', '==', false)
+      );
+      const snap1 = await getDocs(q1);
+      snap1.docs.forEach((d) => studentsMap.set(d.id, d.id));
+    }
+
+    if (mentorEmail) {
+      const q2 = query(
+        collection(db, 'users'),
+        where('mentorEmail', '==', mentorEmail.toLowerCase()),
+        where('isDeleted', '==', false)
+      );
+      const snap2 = await getDocs(q2);
+      snap2.docs.forEach((d) => studentsMap.set(d.id, d.id));
+    }
+
+    if (studentsMap.size === 0) return 0;
+
+    const batch = writeBatch(db);
+    studentsMap.forEach((studentId) => {
+      const studentRef = doc(db, 'users', studentId);
+      const cleanData = sanitizeFirestoreData({
+        mentorUid: '',
+        mentorEmail: '',
+        mentorName: 'Unassigned Mentor',
+        isMentorAssigned: false,
+        updatedAt: serverTimestamp(),
+        updatedBy: performedBy.uid,
+      });
+      batch.update(studentRef, cleanData);
+    });
+
+    await batch.commit();
+
+    await logAudit(
+      'MENTOR_REASSIGNED',
+      performedBy,
+      { mentorUid, mentorEmail, unassignedCount: studentsMap.size, action: 'UNASSIGN_DELETED_MENTOR' },
+      { collection: 'users', id: mentorUid }
+    );
+
+    return studentsMap.size;
+  } catch (error) {
+    console.error('Error unassigning students of deleted mentor:', error);
+    return 0;
+  }
+};
+
 export const updateUserProfile = async (
   uid: string,
   updates: Partial<UserProfile>,
@@ -212,6 +289,18 @@ export const softDeleteUser = async (
   performedBy: { uid: string; name: string; email: string; role: string }
 ): Promise<void> => {
   const userRef = doc(db, 'users', targetUid);
+  let mentorEmail = '';
+
+  try {
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const userData = userSnap.data() as UserProfile;
+      mentorEmail = userData.email || '';
+    }
+  } catch (err) {
+    console.warn('Could not fetch user snap before soft delete:', err);
+  }
+
   const cleanData = sanitizeFirestoreData({
     isDeleted: true,
     isActive: false,
@@ -219,6 +308,9 @@ export const softDeleteUser = async (
     updatedBy: performedBy.uid,
   });
   await updateDoc(userRef, cleanData);
+
+  // Safely transition affected students into Unassigned Mentor state
+  await unassignStudentsOfDeletedMentor(targetUid, mentorEmail, performedBy);
 
   await logAudit(
     'USER_DISABLED',

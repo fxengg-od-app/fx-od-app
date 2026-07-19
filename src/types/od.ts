@@ -6,7 +6,9 @@ export type ODStatus =
   | 'MENTOR_APPROVED'
   | 'MENTOR_REJECTED'
   | 'HOD_APPROVED'
-  | 'HOD_REJECTED';
+  | 'HOD_REJECTED'
+  | 'EXPIRED'
+  | 'WITHDRAWN';
 
 export type ODType =
   | 'Applied Lab'
