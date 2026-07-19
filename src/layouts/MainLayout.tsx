@@ -16,12 +16,12 @@ export const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] dark:bg-[#0F172A] text-[#1F2937] dark:text-[#F9FAFB] flex flex-col font-sans">
+    <div className="h-screen bg-[#F5F7FA] dark:bg-[#0F172A] text-[#1F2937] dark:text-[#F9FAFB] flex flex-col font-sans overflow-hidden">
       {/* Institutional Navbar */}
       <Navbar onToggleMobileDrawer={toggleMobileDrawer} />
 
       {/* Main Layout Container */}
-      <div className="flex-1 flex relative">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Desktop Permanent Sidebar */}
         <Sidebar />
 
@@ -49,7 +49,7 @@ export const MainLayout: React.FC = () => {
         )}
 
         {/* Scrollable Content Area */}
-        <main className="flex-1 p-3.5 sm:p-5 lg:p-6 max-w-7xl mx-auto w-full min-w-0">
+        <main className="flex-1 h-full overflow-y-auto p-3.5 sm:p-5 lg:p-6 max-w-7xl mx-auto w-full min-w-0">
           <Outlet />
         </main>
       </div>

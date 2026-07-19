@@ -29,6 +29,34 @@ export const odRequestSchema = z
   })
   .refine(
     (data) => {
+      if (!data.startDate) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const start = new Date(data.startDate);
+      start.setHours(0, 0, 0, 0);
+      return start >= today;
+    },
+    {
+      message: 'OD start date cannot be in the past',
+      path: ['startDate'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (!data.startDate) return true;
+      const maxDate = new Date();
+      maxDate.setDate(maxDate.getDate() + 60);
+      maxDate.setHours(23, 59, 59, 999);
+      const start = new Date(data.startDate);
+      return start <= maxDate;
+    },
+    {
+      message: 'OD start date cannot be more than 60 days in advance',
+      path: ['startDate'],
+    }
+  )
+  .refine(
+    (data) => {
       if (data.dateType === 'MULTIPLE') {
         return !!data.endDate && new Date(data.endDate) >= new Date(data.startDate);
       }

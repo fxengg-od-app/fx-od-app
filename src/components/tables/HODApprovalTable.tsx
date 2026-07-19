@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Check, CheckCheck, Eye, Lock, X, Calendar } from 'lucide-react';
+import { Check, CheckCheck, Eye, Lock, X, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { ODRequest } from '../../types/od';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { RejectionReasonModal } from '../modals/RejectionReasonModal';
 import { ODDetailsModal } from '../od/ODDetailsModal';
+import { Pagination } from '../common/Pagination';
 
 interface HODApprovalTableProps {
   requests: ODRequest[];
@@ -15,6 +16,8 @@ interface HODApprovalTableProps {
   onBulkReject: (ids: string[], reason: string) => void;
   isLoading?: boolean;
 }
+
+type SortColumn = 'studentName' | 'odType' | 'status';
 
 export const HODApprovalTable: React.FC<HODApprovalTableProps> = ({
   requests,
@@ -28,11 +31,66 @@ export const HODApprovalTable: React.FC<HODApprovalTableProps> = ({
   const [singleRejectId, setSingleRejectId] = useState<string | null>(null);
   const [isBulkRejectModalOpen, setIsBulkRejectModalOpen] = useState(false);
   const [selectedViewRequest, setSelectedViewRequest] = useState<ODRequest | null>(null);
+
+  const [sortColumn, setSortColumn] = useState<SortColumn>('studentName');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [searchParams] = useSearchParams();
   const highlightedId = searchParams.get('highlight') || searchParams.get('odId');
 
   // Filter only mentor-approved items for bulk selection
   const selectableRequests = requests.filter((r) => r.status === 'MENTOR_APPROVED');
+
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => {
+      let valA: string = '';
+      let valB: string = '';
+
+      if (sortColumn === 'studentName') {
+        valA = a.studentSnapshot?.name || '';
+        valB = b.studentSnapshot?.name || '';
+      } else if (sortColumn === 'odType') {
+        valA = a.odType || '';
+        valB = b.odType || '';
+      } else if (sortColumn === 'status') {
+        valA = a.status || '';
+        valB = b.status || '';
+      }
+
+      valA = valA.toLowerCase();
+      valB = valB.toLowerCase();
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [requests, sortColumn, sortDirection]);
+
+  const totalPages = Math.ceil(sortedRequests.length / pageSize) || 1;
+  const paginatedRequests = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedRequests.slice(start, start + pageSize);
+  }, [sortedRequests, currentPage, pageSize]);
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (col: SortColumn) => {
+    if (sortColumn !== col) return <ArrowUpDown className="w-3 h-3 opacity-40 ml-1 inline" />;
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="w-3 h-3 text-[#0B426E] ml-1 inline" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-[#0B426E] ml-1 inline" />
+    );
+  };
 
   const toggleSelectAll = () => {
     if (selectedIds.length === selectableRequests.length) {
@@ -113,7 +171,7 @@ export const HODApprovalTable: React.FC<HODApprovalTableProps> = ({
 
       {/* Mobile Stacked 1-Hand Approval Cards (< md) */}
       <div className="space-y-3 md:hidden">
-        {requests.map((req) => {
+        {paginatedRequests.map((req) => {
           const isMentorApproved = req.status === 'MENTOR_APPROVED';
           const isSelected = selectedIds.includes(req.id);
           const isHighlighted = req.id === highlightedId;
@@ -220,7 +278,7 @@ export const HODApprovalTable: React.FC<HODApprovalTableProps> = ({
       <div className="hidden md:block overflow-x-auto bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 uppercase font-semibold text-[11px] tracking-wider">
+            <tr className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 uppercase font-semibold text-[11px] tracking-wider select-none">
               <th className="p-3 w-10">
                 <input
                   type="checkbox"
@@ -233,14 +291,20 @@ export const HODApprovalTable: React.FC<HODApprovalTableProps> = ({
                   className="rounded border-gray-300 dark:border-gray-600 text-[#0B426E] focus:ring-[#0B426E] cursor-pointer disabled:opacity-30"
                 />
               </th>
-              <th className="p-3">Student & Reg No</th>
-              <th className="p-3">Category & Days</th>
-              <th className="p-3">Mentor Review Status</th>
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('studentName')}>
+                Student & Reg No {renderSortIcon('studentName')}
+              </th>
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('odType')}>
+                Category & Days {renderSortIcon('odType')}
+              </th>
+              <th className="p-3 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('status')}>
+                Mentor Review Status {renderSortIcon('status')}
+              </th>
               <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60 text-gray-700 dark:text-gray-200">
-            {requests.map((req) => {
+            {paginatedRequests.map((req) => {
               const isMentorApproved = req.status === 'MENTOR_APPROVED';
               const isHighlighted = req.id === highlightedId;
 
@@ -323,6 +387,19 @@ export const HODApprovalTable: React.FC<HODApprovalTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedRequests.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
+        pageSizeOptions={[10, 25, 50]}
+      />
 
       <RejectionReasonModal
         isOpen={!!singleRejectId}

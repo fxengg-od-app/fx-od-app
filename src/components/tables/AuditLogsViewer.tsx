@@ -1,24 +1,82 @@
-import React, { useState } from 'react';
-import { Shield, Filter } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Shield, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { AuditLogEntry } from '../../types/audit';
+import { Pagination } from '../common/Pagination';
 
 interface AuditLogsViewerProps {
   logs: AuditLogEntry[];
 }
 
+type SortColumn = 'timestamp' | 'action' | 'performedBy';
+
 export const AuditLogsViewer: React.FC<AuditLogsViewerProps> = ({ logs }) => {
   const [filterAction, setFilterAction] = useState<string>('ALL');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('timestamp');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const filteredLogs = logs.filter((log) => {
-    if (filterAction === 'ALL') return true;
-    return log.action === filterAction;
-  });
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
+      if (filterAction === 'ALL') return true;
+      return log.action === filterAction;
+    });
+  }, [logs, filterAction]);
+
+  const sortedLogs = useMemo(() => {
+    return [...filteredLogs].sort((a, b) => {
+      let valA: string = '';
+      let valB: string = '';
+
+      if (sortColumn === 'timestamp') {
+        valA = typeof a.createdAt === 'string' ? a.createdAt : String(a.createdAt || '');
+        valB = typeof b.createdAt === 'string' ? b.createdAt : String(b.createdAt || '');
+      } else if (sortColumn === 'action') {
+        valA = a.action || '';
+        valB = b.action || '';
+      } else if (sortColumn === 'performedBy') {
+        valA = a.performedBy?.name || '';
+        valB = b.performedBy?.name || '';
+      }
+
+      valA = valA.toLowerCase();
+      valB = valB.toLowerCase();
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredLogs, sortColumn, sortDirection]);
+
+  const totalPages = Math.ceil(sortedLogs.length / pageSize) || 1;
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedLogs.slice(start, start + pageSize);
+  }, [sortedLogs, currentPage, pageSize]);
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(col);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (col: SortColumn) => {
+    if (sortColumn !== col) return <ArrowUpDown className="w-3 h-3 opacity-40 ml-1 inline" />;
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="w-3 h-3 text-[#0B426E] ml-1 inline" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-[#0B426E] ml-1 inline" />
+    );
+  };
 
   const uniqueActions = Array.from(new Set(logs.map((l) => l.action)));
 
   return (
     <div className="space-y-4">
-      {/* Action Filter */}
+      {/* Action Filter Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs gap-3">
         <div className="flex items-center gap-2 text-xs font-bold text-[#0B426E] dark:text-blue-300">
           <Shield className="w-4 h-4 text-[#0B426E] dark:text-blue-400" />
@@ -28,7 +86,10 @@ export const AuditLogsViewer: React.FC<AuditLogsViewerProps> = ({ logs }) => {
           <Filter className="text-gray-400 w-3.5 h-3.5 shrink-0" />
           <select
             value={filterAction}
-            onChange={(e) => setFilterAction(e.target.value)}
+            onChange={(e) => {
+              setFilterAction(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full sm:w-auto bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-xs font-medium text-gray-900 dark:text-white px-3 py-1.5 rounded-md focus:ring-1 focus:ring-[#0B426E] cursor-pointer"
           >
             <option value="ALL">All Audit Actions</option>
@@ -43,7 +104,7 @@ export const AuditLogsViewer: React.FC<AuditLogsViewerProps> = ({ logs }) => {
 
       {/* Mobile Stacked View (< md) */}
       <div className="space-y-3 md:hidden">
-        {filteredLogs.map((log) => (
+        {paginatedLogs.map((log) => (
           <div
             key={log.id}
             className="p-3.5 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs space-y-2 text-xs"
@@ -78,18 +139,24 @@ export const AuditLogsViewer: React.FC<AuditLogsViewerProps> = ({ logs }) => {
       </div>
 
       {/* Desktop Audit Log Table (>= md) */}
-      <div className="hidden md:block overflow-x-auto bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs max-h-[600px] overflow-y-auto custom-scrollbar">
+      <div className="hidden md:block overflow-x-auto bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs">
         <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 uppercase font-semibold text-[11px] tracking-wider text-gray-600 dark:text-gray-300">
+          <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 uppercase font-semibold text-[11px] tracking-wider text-gray-600 dark:text-gray-300 select-none">
             <tr>
-              <th className="p-3.5">Timestamp</th>
-              <th className="p-3.5">Action Event</th>
-              <th className="p-3.5">Performed By</th>
+              <th className="p-3.5 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('timestamp')}>
+                Timestamp {renderSortIcon('timestamp')}
+              </th>
+              <th className="p-3.5 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('action')}>
+                Action Event {renderSortIcon('action')}
+              </th>
+              <th className="p-3.5 cursor-pointer hover:text-gray-900 dark:hover:text-white" onClick={() => handleSort('performedBy')}>
+                Performed By {renderSortIcon('performedBy')}
+              </th>
               <th className="p-3.5">Details & Target</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60 text-gray-700 dark:text-gray-200">
-            {filteredLogs.map((log) => (
+            {paginatedLogs.map((log) => (
               <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
                 <td className="p-3.5 text-[11px] text-gray-500 dark:text-gray-400 font-mono whitespace-nowrap">
                   {typeof log.createdAt === 'string'
@@ -121,6 +188,19 @@ export const AuditLogsViewer: React.FC<AuditLogsViewerProps> = ({ logs }) => {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={sortedLogs.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
+        pageSizeOptions={[10, 25, 50]}
+      />
     </div>
   );
 };

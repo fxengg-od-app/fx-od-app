@@ -15,6 +15,7 @@ import { HODPendingApprovals as HODPending } from '../pages/HOD/PendingApprovals
 import { HODHistory } from '../pages/HOD/ApprovedHistory';
 import { UserManagement } from '../pages/Admin/UserManagement';
 import { AuditLogs } from '../pages/Admin/AuditLogs';
+import { HistoricalODViewer } from '../pages/Admin/HistoricalODViewer';
 import { Analytics } from '../pages/Analytics/Analytics';
 import { Profile } from '../pages/Profile/Profile';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -54,7 +55,7 @@ export const AppRoutes: React.FC = () => {
             <Route path="/hod/history" element={<HODHistory />} />
           </Route>
 
-          {/* Admin Routes */}
+          {/* Admin & Management Routes */}
           <Route
             element={
               <ProtectedRoute
@@ -64,6 +65,7 @@ export const AppRoutes: React.FC = () => {
           >
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/audit" element={<AuditLogs />} />
+            <Route path="/admin/history" element={<HistoricalODViewer />} />
           </Route>
         </Route>
       </Route>

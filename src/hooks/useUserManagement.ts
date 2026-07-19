@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchAllUsers,
   fetchMentorsByDepartment,
+  fetchAllMentors,
   fetchStudentsForMentor,
   fetchStudentsForDepartment,
   assignMentorToStudent,
@@ -21,6 +22,13 @@ export const useAllUsers = () => {
   return useQuery({
     queryKey: ['users', 'all'],
     queryFn: fetchAllUsers,
+  });
+};
+
+export const useAllMentors = () => {
+  return useQuery({
+    queryKey: ['users', 'mentors', 'all'],
+    queryFn: fetchAllMentors,
   });
 };
 

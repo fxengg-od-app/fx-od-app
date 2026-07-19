@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { Loader } from '../../components/common/Loader';
 
 export const Login: React.FC = () => {
-  const { loginWithGoogle, error: authError } = useAuth();
+  const { loginWithGoogle, userProfile, loading: authLoading, error: authError } = useAuth();
   const [loading, setLoading] = useState(false);
   const [accessDeniedError, setAccessDeniedError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (userProfile && !authLoading) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [userProfile, authLoading, navigate]);
+
+  if (authLoading) {
+    return <Loader label="Restoring institutional session..." />;
+  }
 
   const handleSignIn = async () => {
     setLoading(true);

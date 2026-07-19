@@ -10,9 +10,9 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useAllODRequests } from '../../hooks/useODRequests';
 import { Button } from '../../components/common/Button';
-import { RequestsTable } from '../../components/tables/RequestsTable';
 import { ROLE_LABELS } from '../../constants/roles';
 import { StudentDashboard } from '../Student/StudentDashboard';
+import { TodaysApprovedODCard } from '../../components/dashboard/TodaysApprovedODCard';
 
 export const Dashboard: React.FC = () => {
   const { userProfile, activeRole } = useAuth();
@@ -130,21 +130,8 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Institutional Applications */}
-      <div className="space-y-2 pt-1">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-            Recent Applications Record
-          </h3>
-          <button
-            onClick={() => navigate('/analytics')}
-            className="text-xs text-[#0B426E] dark:text-blue-400 hover:underline font-medium cursor-pointer"
-          >
-            View Analytics
-          </button>
-        </div>
-        <RequestsTable requests={allRequests.slice(0, 5)} showStudentDetails />
-      </div>
+      {/* Today's Approved OD Section with Class/Section Breakdown */}
+      <TodaysApprovedODCard allRequests={allRequests} />
     </div>
   );
 };
