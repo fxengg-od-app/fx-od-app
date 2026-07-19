@@ -1,102 +1,132 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useApp } from '../../context/AppContext';
 import {
-  MdDashboard,
-  MdAddCircle,
-  MdListAlt,
-  MdHistory,
-  MdAnalytics,
-  MdPerson,
-  MdExitToApp,
-} from 'react-icons/md';
+  LayoutDashboard,
+  Send,
+  FileText,
+  History,
+  User,
+  Users,
+  CheckCheck,
+  PieChart,
+  UserCheck,
+  ShieldCheck,
+  Settings,
+  Bell,
+  GraduationCap,
+} from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  onNavigate?: () => void;
+  isMobileDrawer?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { currentRole } = useApp();
+export const Sidebar: React.FC<SidebarProps> = ({ onNavigate, isMobileDrawer = false }) => {
+  const { userProfile } = useAuth();
+  const role = userProfile?.role || 'STUDENT';
 
-  const getLinks = () => {
-    switch (currentRole) {
+  const getRoleNavLinks = () => {
+    switch (role) {
       case 'STUDENT':
         return [
-          { name: 'Dashboard', path: '/dashboard', icon: MdDashboard },
-          { name: 'Apply OD', path: '/student/apply', icon: MdAddCircle },
-          { name: 'My Requests', path: '/student/requests', icon: MdListAlt },
-          { name: 'History', path: '/student/history', icon: MdHistory },
-          { name: 'Profile', path: '/profile', icon: MdPerson },
+          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/student/requests', label: 'My Requests', icon: FileText },
+          { to: '/student/apply', label: 'Apply OD', icon: Send },
+          { to: '/student/history', label: 'History', icon: History },
+          { to: '/student/notifications', label: 'Notifications', icon: Bell },
+          { to: '/profile', label: 'Profile', icon: User },
         ];
       case 'MENTOR':
         return [
-          { name: 'Dashboard', path: '/dashboard', icon: MdDashboard },
-          { name: 'Pending Approvals', path: '/mentor/pending', icon: MdListAlt },
-          { name: 'History', path: '/mentor/history', icon: MdHistory },
-          { name: 'Profile', path: '/profile', icon: MdPerson },
+          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/mentor/students', label: 'Students Under Me', icon: Users },
+          { to: '/mentor/pending', label: 'Pending Approvals', icon: FileText },
+          { to: '/mentor/history', label: 'Approval History', icon: History },
+          { to: '/profile', label: 'Profile', icon: User },
         ];
       case 'HOD':
         return [
-          { name: 'Dashboard', path: '/dashboard', icon: MdDashboard },
-          { name: 'Pending Approvals', path: '/hod/pending', icon: MdListAlt },
-          { name: 'Approved History', path: '/hod/history', icon: MdHistory },
-          { name: 'Analytics', path: '/analytics', icon: MdAnalytics },
-          { name: 'Profile', path: '/profile', icon: MdPerson },
+          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/hod/students', label: 'Department Students', icon: Users },
+          { to: '/hod/pending', label: 'Pending Approvals', icon: CheckCheck },
+          { to: '/hod/history', label: 'Approval History', icon: History },
+          { to: '/analytics', label: 'Department Analytics', icon: PieChart },
+          { to: '/profile', label: 'Profile', icon: User },
+        ];
+      case 'SUPER_ADMIN':
+      case 'PRINCIPAL':
+      case 'ACADEMIC_COORDINATOR':
+        return [
+          { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { to: '/admin/users', label: 'User Management', icon: UserCheck },
+          { to: '/admin/audit', label: 'Audit Logs', icon: ShieldCheck },
+          { to: '/profile', label: 'Settings', icon: Settings },
         ];
       default:
-        return [{ name: 'Dashboard', path: '/dashboard', icon: MdDashboard }];
+        return [{ to: '/student/requests', label: 'My Requests', icon: FileText }];
     }
   };
 
-  const links = getLinks();
+  const navLinks = getRoleNavLinks();
 
-  const activeStyle = 'flex items-center gap-3 px-4 py-2.5 text-sm font-semibold rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400';
-  const inactiveStyle = 'flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg text-gray-650 hover:bg-gray-50 hover:text-gray-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-200 transition-all';
+  const containerClasses = isMobileDrawer
+    ? 'w-full h-full bg-[#0B426E] text-white p-4 flex flex-col justify-between overflow-y-auto'
+    : 'w-60 bg-[#0B426E] text-white min-h-[calc(100vh-61px)] p-3 flex flex-col justify-between hidden md:flex shrink-0 shadow-md';
 
   return (
-    <>
-      {/* Mobile drawer backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden"
-          onClick={onClose}
-        />
-      )}
+    <aside className={containerClasses}>
+      <div className="space-y-4">
+        {/* Header Branding for Drawer */}
+        {isMobileDrawer && (
+          <div className="flex items-center gap-3 pb-3 border-b border-white/20">
+            <div className="w-8 h-8 rounded-md bg-white text-[#0B426E] flex items-center justify-center font-bold">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-sm text-white tracking-tight">FX OD Portal</h2>
+              <p className="text-[11px] text-white/70">Institutional ERP System</p>
+            </div>
+          </div>
+        )}
 
-      {/* Sidebar navigation container */}
-      <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-64 border-r border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 pt-16 flex flex-col justify-between transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-      >
-        <div className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
-          {links.map((link) => {
+        {/* Section Header */}
+        <div className="px-2 py-1 border-b border-white/10">
+          <p className="text-[10px] font-semibold text-white/60 uppercase tracking-wider">
+            Portal Navigation
+          </p>
+        </div>
+
+        {/* Navigation Items */}
+        <nav className="space-y-1.5">
+          {navLinks.map((link, idx) => {
             const Icon = link.icon;
             return (
               <NavLink
-                key={link.path}
-                to={link.path}
-                onClick={onClose}
-                className={({ isActive }) => (isActive ? activeStyle : inactiveStyle)}
+                key={`${link.to}-${idx}`}
+                to={link.to}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-white text-[#0B426E] font-semibold shadow-xs'
+                      : 'text-white/80 hover:bg-[#0d4e82] hover:text-white'
+                  }`
+                }
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {link.name}
+                <Icon className="w-4 h-4 shrink-0 text-current" />
+                <span>{link.label}</span>
               </NavLink>
             );
           })}
-        </div>
+        </nav>
+      </div>
 
-        {/* Footer actions */}
-        <div className="p-4 border-t border-gray-150 dark:border-zinc-800">
-          <NavLink
-            to="/"
-            onClick={onClose}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg text-red-650 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/20 transition-all w-full text-left"
-          >
-            <MdExitToApp className="h-5 w-5" />
-            Sign Out
-          </NavLink>
-        </div>
-      </aside>
-    </>
+      {/* Institutional Footer */}
+      <div className="p-3 bg-white/10 rounded-md border border-white/10 text-center space-y-0.5 mt-6">
+        <p className="text-xs font-semibold text-white">Francis Xavier Engineering College</p>
+        <p className="text-[10px] text-white/70">OD Management System v2.0</p>
+      </div>
+    </aside>
   );
 };

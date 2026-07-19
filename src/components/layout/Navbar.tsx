@@ -1,73 +1,139 @@
-import React from 'react';
-import { useApp } from '../../context/AppContext';
-import type { UserRole } from '../../constants/roles';
-import { FaUserCircle, FaGraduationCap } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { GraduationCap, Moon, Sun, LogOut, Shield, Clock, Menu } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
+import { NotificationBell } from './NotificationBell';
+import { ROLE_LABELS } from '../../constants/roles';
 
-export const Navbar: React.FC<{ onToggleSidebar: () => void }> = ({ onToggleSidebar }) => {
-  const { currentRole, setCurrentRole } = useApp();
+interface NavbarProps {
+  onToggleMobileDrawer?: () => void;
+}
 
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCurrentRole(e.target.value as UserRole);
-  };
+export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileDrawer }) => {
+  const { userProfile, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [currentTime, setCurrentTime] = useState<string>('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const userRole = userProfile?.role || 'STUDENT';
+  const roleLabel = ROLE_LABELS[userRole] || userRole;
 
   return (
-    <header className="sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 h-16 w-full flex items-center justify-between px-4 sm:px-6">
-      {/* Left side: Hamburger & Title */}
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 bg-[#0B426E] text-white border-b border-white/10 px-3 sm:px-4 lg:px-6 py-2.5 flex items-center justify-between shadow-md">
+      {/* Left Brand Header & Mobile Hamburger */}
+      <div className="flex items-center gap-2.5">
         <button
-          onClick={onToggleSidebar}
-          className="p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 md:hidden focus:outline-none"
+          onClick={onToggleMobileDrawer}
+          className="md:hidden p-1.5 rounded-md hover:bg-white/10 text-white transition-colors cursor-pointer"
+          title="Toggle Navigation Menu"
+          aria-label="Toggle Navigation Menu"
         >
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <Menu className="w-5 h-5 text-white" />
         </button>
-        <div className="flex items-center gap-2">
-          <FaGraduationCap className="h-8 w-8 text-blue-600" />
-          <div>
-            <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-zinc-100 leading-tight m-0">
-              FX EC OD portal
+
+        <div className="h-8 w-8 rounded-md bg-white text-[#0B426E] flex items-center justify-center font-bold shrink-0">
+          <GraduationCap className="w-5 h-5" />
+        </div>
+        <div>
+          <div className="flex items-center gap-1.5">
+            <h1 className="font-semibold text-xs sm:text-sm text-white tracking-tight leading-tight">
+              Institutional OD Portal
             </h1>
-            <span className="text-[10px] text-gray-500 font-medium tracking-wide block uppercase">
-              Intra-college OD system
+            <span className="hidden sm:inline-block text-[10px] font-medium bg-white/15 text-white border border-white/20 px-1.5 py-0.5 rounded-md">
+              v2.0
             </span>
           </div>
+          <p className="text-[10px] sm:text-[11px] text-white/80">Francis Xavier Engineering College</p>
         </div>
       </div>
 
-      {/* Right side: Role Switcher & User Profile */}
-      <div className="flex items-center gap-4">
-        {/* Role Switcher Widget */}
-        <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 px-3 py-1.5 rounded-lg">
-          <label htmlFor="role-select" className="text-xs font-semibold text-gray-500 dark:text-zinc-400">
-            Role:
-          </label>
-          <select
-            id="role-select"
-            value={currentRole}
-            onChange={handleRoleChange}
-            className="text-xs font-bold text-gray-800 dark:text-zinc-200 bg-transparent border-none outline-none focus:ring-0 cursor-pointer"
-          >
-            <option value="STUDENT" className="dark:bg-zinc-900">Student</option>
-            <option value="MENTOR" className="dark:bg-zinc-900">Mentor</option>
-            <option value="HOD" className="dark:bg-zinc-900">HOD</option>
-          </select>
+      {/* Right Controls */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Live Digital Clock */}
+        <div className="hidden lg:flex items-center gap-1.5 font-mono text-xs text-white/90 bg-white/10 px-2.5 py-1 rounded-md border border-white/20">
+          <Clock className="w-3.5 h-3.5 text-white/70" />
+          <span>{currentTime || '12:00:00 PM'}</span>
         </div>
 
-        {/* User Info */}
-        <div className="flex items-center gap-2 border-l border-gray-100 dark:border-zinc-800 pl-4">
-          <FaUserCircle className="h-6 w-6 text-gray-400" />
-          <div className="hidden sm:block text-left">
-            <p className="text-xs font-semibold text-gray-850 dark:text-zinc-200">
-              {currentRole === 'STUDENT'
-                ? 'Arun Kumar K'
-                : currentRole === 'MENTOR'
-                ? 'Mrs. R. Jeyanthi'
-                : 'Dr. S. Premkumar'}
-            </p>
-            <p className="text-[10px] text-gray-400 font-medium uppercase">{currentRole}</p>
+        {/* Theme Switch */}
+        <button
+          onClick={toggleTheme}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white/10 border border-white/20 text-white hover:bg-white/20 cursor-pointer transition-colors"
+          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+        >
+          {theme === 'light' ? (
+            <>
+              <Sun className="w-3.5 h-3.5 text-amber-300" />
+              <span className="hidden sm:inline">Light</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-3.5 h-3.5 text-indigo-200" />
+              <span className="hidden sm:inline">Dark</span>
+            </>
+          )}
+        </button>
+
+        {/* Read-Only Role Badge */}
+        {userProfile && (
+          <div className="hidden sm:flex items-center gap-1.5 bg-white/10 border border-white/30 rounded-md px-2.5 py-1 text-xs font-medium text-white">
+            <Shield className="w-3.5 h-3.5 text-white/80" />
+            <span className="uppercase font-semibold tracking-wider text-[11px]">{roleLabel}</span>
           </div>
-        </div>
+        )}
+
+        {/* Notifications */}
+        <NotificationBell />
+
+        {/* User Profile Chip */}
+        {userProfile && (
+          <div className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-white/20">
+            <div className="hidden xl:block text-right">
+              <p className="text-xs font-semibold text-white leading-tight">
+                {userProfile.displayName}
+              </p>
+              <p className="text-[10px] text-white/80 font-medium">
+                {userProfile.department}
+              </p>
+            </div>
+            {userProfile.photoURL ? (
+              <img
+                src={userProfile.photoURL}
+                alt={userProfile.displayName}
+                className="w-7 h-7 rounded-md border border-white/30 object-cover"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-md bg-white text-[#0B426E] font-bold flex items-center justify-center text-xs">
+                {userProfile.displayName.charAt(0)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sign Out Button */}
+        <button
+          onClick={logout}
+          className="p-1.5 text-white/80 hover:text-white hover:bg-white/15 rounded-md cursor-pointer transition-colors"
+          title="Sign Out"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </header>
   );

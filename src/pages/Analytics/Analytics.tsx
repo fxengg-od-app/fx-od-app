@@ -1,97 +1,103 @@
 import React from 'react';
+import { BarChart3, PieChart, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { useAllODRequests } from '../../hooks/useODRequests';
 import { Card } from '../../components/common/Card';
-import { useApp } from '../../context/AppContext';
-import { StatsCard } from '../../components/dashboard/StatsCard';
-import { FaGraduationCap, FaPercent, FaClock, FaCheckDouble } from 'react-icons/fa';
+import { Loader } from '../../components/common/Loader';
 
 export const Analytics: React.FC = () => {
-  const { requests } = useApp();
+  const { data: requests = [], isLoading } = useAllODRequests();
 
-  // Metrics calculations
   const total = requests.length;
-  const approved = requests.filter((r) => r.finalStatus === 'APPROVED').length;
-  const pending = requests.filter((r) => r.finalStatus === 'PENDING').length;
-  const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+  const hodApproved = requests.filter((r) => r.status === 'HOD_APPROVED').length;
+  const mentorApproved = requests.filter((r) => r.status === 'MENTOR_APPROVED').length;
+  const rejected = requests.filter(
+    (r) => r.status === 'MENTOR_REJECTED' || r.status === 'HOD_REJECTED'
+  ).length;
+  const pending = requests.filter((r) => r.status === 'PENDING').length;
 
-  // Department-wise distribution
-  const departments = ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AIDS'];
-  const deptCounts = departments.map((dept) => {
-    return requests.filter((r) => r.department === dept && r.finalStatus === 'APPROVED').length;
+  const approvalRate = total > 0 ? Math.round((hodApproved / total) * 100) : 0;
+
+  // Breakdown by Department
+  const deptCounts: Record<string, number> = {};
+  requests.forEach((r) => {
+    deptCounts[r.department] = (deptCounts[r.department] || 0) + 1;
   });
-  const maxDeptCount = Math.max(...deptCounts, 1);
 
-  // Monthly trends (mocked values + local adjustments)
-  const monthlyData = [
-    { month: 'Jan', count: 12 },
-    { month: 'Feb', count: 19 },
-    { month: 'Mar', count: 32 },
-    { month: 'Apr', count: 15 },
-    { month: 'May', count: 8 },
-    { month: 'Jun', count: 24 },
-    { month: 'Jul', count: approved + 5 },
-  ];
-  const maxMonthlyCount = Math.max(...monthlyData.map((d) => d.count), 1);
+  // Breakdown by Category
+  const typeCounts: Record<string, number> = {};
+  requests.forEach((r) => {
+    typeCounts[r.odType] = (typeCounts[r.odType] || 0) + 1;
+  });
+
+  if (isLoading) {
+    return <Loader label="Computing institutional OD analytics..." />;
+  }
 
   return (
-    <div className="space-y-6 text-left">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-zinc-100 m-0">
-          Analytics Overview
-        </h1>
-        <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-          Detailed metrics, department approvals, trends, and success rate analysis.
-        </p>
+    <div className="space-y-4">
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">OD Analytics & Reports</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Institutional overview of OD request volumes, approval metrics, and departmental distributions.</p>
       </div>
 
-      {/* Stats Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total Applications"
-          value={total}
-          icon={<FaGraduationCap className="h-5 w-5" />}
-          color="blue"
-        />
-        <StatsCard
-          title="Approval Rate"
-          value={`${approvalRate}%`}
-          icon={<FaPercent className="h-5 w-5" />}
-          color="green"
-        />
-        <StatsCard
-          title="Pending Queue"
-          value={pending}
-          icon={<FaClock className="h-5 w-5" />}
-          color="yellow"
-        />
-        <StatsCard
-          title="Approved ODs"
-          value={approved}
-          icon={<FaCheckDouble className="h-5 w-5" />}
-          color="blue"
-        />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="space-y-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Sanction Rate</p>
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">{approvalRate}%</h3>
+            <CheckCircle2 className="text-green-600 dark:text-green-400 w-6 h-6" />
+          </div>
+          <p className="text-[10px] text-gray-400">{hodApproved} sanctioned of {total} total</p>
+        </Card>
+
+        <Card className="space-y-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Pending Approvals</p>
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold text-amber-500">{pending + mentorApproved}</h3>
+            <Clock className="text-amber-500 w-6 h-6" />
+          </div>
+          <p className="text-[10px] text-gray-400">{pending} mentor + {mentorApproved} HOD</p>
+        </Card>
+
+        <Card className="space-y-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Rejections</p>
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold text-red-600 dark:text-red-400">{rejected}</h3>
+            <XCircle className="text-red-600 dark:text-red-400 w-6 h-6" />
+          </div>
+          <p className="text-[10px] text-gray-400">Mentor & HOD rejections</p>
+        </Card>
+
+        <Card className="space-y-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Volume</p>
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold text-[#0B426E] dark:text-blue-400">{total}</h3>
+            <PieChart className="text-[#0B426E] dark:text-blue-400 w-6 h-6" />
+          </div>
+          <p className="text-[10px] text-gray-400">Across all departments</p>
+        </Card>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Department Statistics - SVG Bar Chart */}
-        <Card className="p-6">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-150 mb-6">
-            Department Statistics (Approved ODs)
+      {/* Visual Distributions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Department Breakdown */}
+        <div className="p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs space-y-3">
+          <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+            <BarChart3 className="text-[#0B426E] dark:text-blue-400 w-4 h-4" /> Requests by Department
           </h3>
-          <div className="space-y-4">
-            {departments.map((dept, idx) => {
-              const count = deptCounts[idx];
-              const pct = (count / maxDeptCount) * 100;
+          <div className="space-y-2.5">
+            {Object.entries(deptCounts).map(([dept, count]) => {
+              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
               return (
                 <div key={dept} className="space-y-1">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-gray-700 dark:text-zinc-300">{dept}</span>
-                    <span className="text-gray-900 dark:text-zinc-100 font-bold">{count} ODs</span>
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-gray-800 dark:text-gray-200">{dept}</span>
+                    <span className="text-[#0B426E] dark:text-blue-300">{count} requests ({pct}%)</span>
                   </div>
-                  <div className="w-full bg-gray-100 dark:bg-zinc-800 h-3 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
                     <div
-                      className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                      className="bg-[#0B426E] dark:bg-blue-500 h-full rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -99,36 +105,33 @@ export const Analytics: React.FC = () => {
               );
             })}
           </div>
-        </Card>
+        </div>
 
-        {/* Monthly Trend - Area SVG Chart */}
-        <Card className="p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-150 mb-4">
-              Monthly OD Count
-            </h3>
-            <p className="text-[10px] text-gray-400 font-medium mb-6">
-              OD application approval frequencies over the calendar months.
-            </p>
-          </div>
-          <div className="flex items-end justify-between h-48 pt-4 border-b border-l border-gray-150 dark:border-zinc-800 px-4">
-            {monthlyData.map((d) => {
-              const heightPct = (d.count / maxMonthlyCount) * 80; // scale max height
+        {/* OD Category Breakdown */}
+        <div className="p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs space-y-3">
+          <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+            <PieChart className="text-[#0B426E] dark:text-blue-400 w-4 h-4" /> Requests by OD Category
+          </h3>
+          <div className="space-y-2.5">
+            {Object.entries(typeCounts).map(([cat, count]) => {
+              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
               return (
-                <div key={d.month} className="flex flex-col items-center flex-1 group">
-                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {d.count}
-                  </span>
-                  <div
-                    className="w-8 bg-blue-500/20 group-hover:bg-blue-500 border border-blue-500 rounded-t-sm transition-all duration-300"
-                    style={{ height: `${heightPct}%` }}
-                  />
-                  <span className="text-[10px] font-semibold text-gray-500 mt-2">{d.month}</span>
+                <div key={cat} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-gray-800 dark:text-gray-200">{cat}</span>
+                    <span className="text-[#0B426E] dark:text-blue-300">{count} ({pct}%)</span>
+                  </div>
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-indigo-600 dark:bg-indigo-400 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
               );
             })}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

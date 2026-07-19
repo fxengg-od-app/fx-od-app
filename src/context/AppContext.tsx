@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { UserRole } from '../constants/roles';
+import type { UserRole } from '../types/user';
 
 export interface ODRequest {
   id: string;

@@ -1,124 +1,88 @@
 import React from 'react';
-import { useApp } from '../../context/AppContext';
-import { Card } from '../../components/common/Card';
-import { FaUserCircle } from 'react-icons/fa';
+import { Building, IdCard, UserCheck, Mail, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { ROLE_LABELS } from '../../constants/roles';
 
 export const Profile: React.FC = () => {
-  const { currentRole } = useApp();
+  const { userProfile, activeRole } = useAuth();
 
-  const getProfileDetails = () => {
-    switch (currentRole) {
-      case 'STUDENT':
-        return {
-          name: 'Arun Kumar K',
-          email: 'arunkumar.22cse@francisxavier.ac.in',
-          department: 'Computer Science and Engineering',
-          roleName: 'Student (III Year, Sec A)',
-          register: '951221104001',
-          classAdvisor: 'Mrs. R. Jeyanthi',
-        };
-      case 'MENTOR':
-        return {
-          name: 'Mrs. R. Jeyanthi',
-          email: 'rjeyanthi@francisxavier.ac.in',
-          department: 'Computer Science and Engineering',
-          roleName: 'Assistant Professor & Mentor',
-          register: 'EMP-CSE-324',
-          classAdvisor: 'N/A',
-        };
-      case 'HOD':
-        return {
-          name: 'Dr. S. Premkumar',
-          email: 'premkumar.cse@francisxavier.ac.in',
-          department: 'Computer Science and Engineering',
-          roleName: 'Professor & Head of Department (HOD)',
-          register: 'EMP-CSE-102',
-          classAdvisor: 'N/A',
-        };
-      default:
-        return {
-          name: 'Administrator',
-          email: 'admin@francisxavier.ac.in',
-          department: 'IT Operations',
-          roleName: 'System Administrator',
-          register: 'EMP-ADMIN-01',
-          classAdvisor: 'N/A',
-        };
-    }
-  };
-
-  const profile = getProfileDetails();
+  if (!userProfile) return null;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 text-left">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-zinc-100 m-0">
-          User Profile
-        </h1>
-        <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-          Your profile information is fetched from the college database directory.
-        </p>
+    <div className="max-w-2xl mx-auto space-y-4">
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">Institutional Profile</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Authenticated user identity details stored in Firestore.</p>
       </div>
 
-      <Card className="p-8">
-        <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-150 dark:border-zinc-800">
-          <div className="text-blue-600 dark:text-blue-400">
-            <FaUserCircle className="h-20 w-20" />
-          </div>
-          <div className="text-center sm:text-left">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-150 m-0">
-              {profile.name}
-            </h2>
-            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-1">
-              {profile.roleName}
-            </p>
-            <span className="text-xs text-gray-400 dark:text-zinc-500 font-medium block mt-0.5">
-              ID/Register: {profile.register}
-            </span>
-          </div>
-        </div>
-
-        <div className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
-          <div>
-            <span className="text-xs text-gray-450 dark:text-zinc-500 font-bold block uppercase tracking-wider">
-              Email Address
-            </span>
-            <span className="text-gray-800 dark:text-zinc-200 font-semibold block mt-1">
-              {profile.email}
-            </span>
-          </div>
-
-          <div>
-            <span className="text-xs text-gray-450 dark:text-zinc-500 font-bold block uppercase tracking-wider">
-              Department
-            </span>
-            <span className="text-gray-800 dark:text-zinc-200 font-semibold block mt-1">
-              {profile.department}
-            </span>
-          </div>
-
-          {currentRole === 'STUDENT' && (
-            <div>
-              <span className="text-xs text-gray-450 dark:text-zinc-500 font-bold block uppercase tracking-wider">
-                Class Mentor
-              </span>
-              <span className="text-gray-800 dark:text-zinc-200 font-semibold block mt-1">
-                {profile.classAdvisor}
-              </span>
+      <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-xs space-y-4">
+        {/* User Header */}
+        <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+          {userProfile.photoURL ? (
+            <img
+              src={userProfile.photoURL}
+              alt={userProfile.displayName}
+              className="w-14 h-14 rounded-md border border-gray-200 object-cover"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-md bg-[#0B426E] flex items-center justify-center font-bold text-white text-lg shrink-0">
+              {userProfile.displayName.charAt(0)}
             </div>
           )}
 
           <div>
-            <span className="text-xs text-gray-450 dark:text-zinc-500 font-bold block uppercase tracking-wider">
-              Access Scope
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-green-700 dark:text-green-400 font-bold mt-1 text-xs px-2.5 py-0.5 rounded-full bg-green-50 dark:bg-green-950/20 border border-green-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              Active Authorization
-            </span>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{userProfile.displayName}</h3>
+            <p className="text-xs text-[#0B426E] dark:text-blue-400 font-semibold">{ROLE_LABELS[activeRole || userProfile.role]}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{userProfile.email}</p>
           </div>
         </div>
-      </Card>
+
+        {/* Profile Details Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md space-y-1">
+            <span className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5 text-[11px]">
+              <Building className="w-3.5 h-3.5 text-[#0B426E] dark:text-blue-400" /> Department
+            </span>
+            <p className="font-semibold text-gray-900 dark:text-white text-xs">{userProfile.department}</p>
+          </div>
+
+          <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md space-y-1">
+            <span className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5 text-[11px]">
+              <IdCard className="w-3.5 h-3.5 text-[#0B426E] dark:text-blue-400" /> Register Number / UID
+            </span>
+            <p className="font-semibold text-gray-900 dark:text-white font-mono text-xs">{userProfile.registerNumber || userProfile.uid}</p>
+          </div>
+
+          {userProfile.role === 'STUDENT' && (
+            <>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md space-y-1">
+                <span className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5 text-[11px]">
+                  <UserCheck className="w-3.5 h-3.5 text-[#0B426E] dark:text-blue-400" /> Year & Section
+                </span>
+                <p className="font-semibold text-gray-900 dark:text-white text-xs">
+                  Year {userProfile.year || 'III'} • Section {userProfile.section || 'A'}
+                </p>
+              </div>
+
+              <div className="p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md space-y-1">
+                <span className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5 text-[11px]">
+                  <Mail className="w-3.5 h-3.5 text-[#0B426E] dark:text-blue-400" /> Assigned Faculty Mentor
+                </span>
+                <p className="font-semibold text-[#0B426E] dark:text-blue-300 text-xs">
+                  {userProfile.mentorName || 'Faculty Mentor'} ({userProfile.mentorEmail || 'N/A'})
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="p-3 bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-700 rounded-md text-[11px] text-gray-600 dark:text-gray-300 flex items-center justify-between">
+          <span className="flex items-center gap-1.5 font-medium">
+            <ShieldCheck className="w-4 h-4 text-green-600" /> Firestore Security Status
+          </span>
+          <span className="text-green-700 dark:text-green-400 font-semibold uppercase">Verified Institutional Account</span>
+        </div>
+      </div>
     </div>
   );
 };

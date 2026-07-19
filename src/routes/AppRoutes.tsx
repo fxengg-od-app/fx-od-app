@@ -6,12 +6,18 @@ import { Dashboard } from '../pages/Dashboard/Dashboard';
 import { ApplyOD } from '../pages/Student/ApplyOD';
 import { MyRequests } from '../pages/Student/MyRequests';
 import { History as StudentHistory } from '../pages/Student/History';
+import { StudentNotifications } from '../pages/Student/Notifications';
+import { StudentsUnderMe } from '../pages/Mentor/StudentsUnderMe';
 import { PendingApprovals as MentorPending } from '../pages/Mentor/PendingApprovals';
 import { MentorHistory } from '../pages/Mentor/History';
+import { DepartmentStudents } from '../pages/HOD/DepartmentStudents';
 import { HODPendingApprovals as HODPending } from '../pages/HOD/PendingApprovals';
 import { HODHistory } from '../pages/HOD/ApprovedHistory';
+import { UserManagement } from '../pages/Admin/UserManagement';
+import { AuditLogs } from '../pages/Admin/AuditLogs';
 import { Analytics } from '../pages/Analytics/Analytics';
 import { Profile } from '../pages/Profile/Profile';
+import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -19,18 +25,47 @@ export const AppRoutes: React.FC = () => {
       {/* Public Login Route */}
       <Route path="/" element={<Login />} />
 
-      {/* Authenticated/Dashboard Layout Group */}
-      <Route element={<MainLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/student/apply" element={<ApplyOD />} />
-        <Route path="/student/requests" element={<MyRequests />} />
-        <Route path="/student/history" element={<StudentHistory />} />
-        <Route path="/mentor/pending" element={<MentorPending />} />
-        <Route path="/mentor/history" element={<MentorHistory />} />
-        <Route path="/hod/pending" element={<HODPending />} />
-        <Route path="/hod/history" element={<HODHistory />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/profile" element={<Profile />} />
+      {/* Protected Layout Group */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/profile" element={<Profile />} />
+
+          {/* Student Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+            <Route path="/student/requests" element={<MyRequests />} />
+            <Route path="/student/apply" element={<ApplyOD />} />
+            <Route path="/student/history" element={<StudentHistory />} />
+            <Route path="/student/notifications" element={<StudentNotifications />} />
+          </Route>
+
+          {/* Mentor Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['MENTOR']} />}>
+            <Route path="/mentor/students" element={<StudentsUnderMe />} />
+            <Route path="/mentor/pending" element={<MentorPending />} />
+            <Route path="/mentor/history" element={<MentorHistory />} />
+          </Route>
+
+          {/* HOD Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
+            <Route path="/hod/students" element={<DepartmentStudents />} />
+            <Route path="/hod/pending" element={<HODPending />} />
+            <Route path="/hod/history" element={<HODHistory />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={['SUPER_ADMIN', 'PRINCIPAL', 'ACADEMIC_COORDINATOR']}
+              />
+            }
+          >
+            <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/audit" element={<AuditLogs />} />
+          </Route>
+        </Route>
       </Route>
 
       {/* Fallback Catch-All */}

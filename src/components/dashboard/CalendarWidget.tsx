@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '../common/Card';
 import { useApp } from '../../context/AppContext';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const CalendarWidget: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -45,7 +46,7 @@ export const CalendarWidget: React.FC = () => {
   const days = [];
   // Fill empty spaces for starting days of week
   for (let i = 0; i < firstDay; i++) {
-    days.push(<div key={`empty-${i}`} className="h-10" />);
+    days.push(<div key={`empty-${i}`} className="h-8 sm:h-9" />);
   }
 
   // Fill day numbers
@@ -57,13 +58,13 @@ export const CalendarWidget: React.FC = () => {
       <button
         key={d}
         type="button"
-        className={`h-10 w-full relative flex flex-col items-center justify-center rounded-lg text-xs font-semibold transition-all hover:bg-gray-100 dark:hover:bg-zinc-800 ${
-          isToday ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-800 dark:text-zinc-200'
+        className={`h-8 sm:h-9 w-full relative flex flex-col items-center justify-center rounded-md text-[11px] sm:text-xs font-semibold transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${
+          isToday ? 'bg-[#0B426E] text-white hover:bg-[#083356]' : 'text-gray-800 dark:text-gray-200'
         }`}
       >
         <span>{d}</span>
         {odCount > 0 && (
-          <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isToday ? 'bg-white' : 'bg-green-500'}`} />
+          <span className={`absolute bottom-0.5 sm:bottom-1 w-1.5 h-1.5 rounded-full ${isToday ? 'bg-white' : 'bg-green-600'}`} />
         )}
       </button>
     );
@@ -72,36 +73,38 @@ export const CalendarWidget: React.FC = () => {
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-gray-900 dark:text-zinc-150">
+    <Card className="p-3.5 sm:p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
           OD Calendar ({monthNames[month]} {year})
         </h3>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setSelectedDate(new Date(year, month - 1, 1))}
-            className="p-1.5 border border-gray-200 dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-850 cursor-pointer"
+            className="p-1 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 cursor-pointer"
+            title="Previous Month"
           >
-            &lt;
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setSelectedDate(new Date())}
-            className="text-xs font-semibold px-2 py-1 border border-gray-200 dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-850 cursor-pointer"
+            className="text-[11px] font-semibold px-2 py-0.5 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-pointer"
           >
             Today
           </button>
           <button
             onClick={() => setSelectedDate(new Date(year, month + 1, 1))}
-            className="p-1.5 border border-gray-200 dark:border-zinc-800 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-850 cursor-pointer"
+            className="p-1 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 cursor-pointer"
+            title="Next Month"
           >
-            &gt;
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-2 text-center">
+      <div className="grid grid-cols-7 gap-y-1 text-center">
         {weekdays.map((w) => (
-          <div key={w} className="text-[10px] font-bold text-gray-450 uppercase tracking-wider">
+          <div key={w} className="text-[10px] font-bold text-gray-400 uppercase tracking-wider py-1">
             {w}
           </div>
         ))}

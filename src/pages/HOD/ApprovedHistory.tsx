@@ -1,27 +1,29 @@
 import React from 'react';
-import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../hooks/useAuth';
+import { useHODHistoryRequests } from '../../hooks/useODRequests';
 import { RequestsTable } from '../../components/tables/RequestsTable';
+import { Loader } from '../../components/common/Loader';
 
 export const HODHistory: React.FC = () => {
-  const { requests } = useApp();
-
-  // Filter requests that have been processed by the HOD
-  const processedRequests = requests.filter(
-    (r) => r.hodStatus !== 'PENDING'
-  );
+  const { userProfile } = useAuth();
+  const { data: requests = [], isLoading } = useHODHistoryRequests(userProfile?.department);
 
   return (
-    <div className="space-y-6 text-left">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-zinc-100 m-0">
-          HOD Approval History
-        </h1>
-        <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-          Archive of all OD applications processed by the Head of Department.
+    <div className="space-y-4">
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+          HOD Department Sanction History
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Archived record of all sanctioned and rejected OD applications in {userProfile?.department}.
         </p>
       </div>
 
-      <RequestsTable data={processedRequests} />
+      {isLoading ? (
+        <Loader label="Loading department sanction history..." />
+      ) : (
+        <RequestsTable requests={requests} showStudentDetails />
+      )}
     </div>
   );
 };

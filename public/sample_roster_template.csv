@@ -1,0 +1,8 @@
+email,name,role,department,registerNumber,year,section,mentorEmail
+premkumar@fx.edu.in,Dr. S. Premkumar,MENTOR,CSE,,,
+jeyanthi@fx.edu.in,Mrs. R. Jeyanthi,MENTOR,CSE,,,
+rajkumar@fx.edu.in,Dr. G. Rajkumar,HOD,CSE,,,
+arun@fx.edu.in,Arun Kumar K,STUDENT,CSE,951221104001,III,A,premkumar@fx.edu.in
+priya@fx.edu.in,Priya Dharshini M,STUDENT,CSE,951221104045,III,B,premkumar@fx.edu.in
+harish@fx.edu.in,Harish R,STUDENT,CSE,951221104012,III,A,premkumar@fx.edu.in
+sanjay@fx.edu.in,Sanjay P,STUDENT,CSE,951221104088,III,A,jeyanthi@fx.edu.in

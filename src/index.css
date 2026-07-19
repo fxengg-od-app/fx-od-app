@@ -1,12 +1,47 @@
 @import "tailwindcss";
 
-/* Optional custom global resets if needed */
-html,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html,
+  body,
+  #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Custom Institutional ERP Utilities */
+.bg-erp-primary {
+  background-color: #0B426E;
+}
+
+.text-erp-primary {
+  color: #0B426E;
+}
+
+.border-erp-primary {
+  border-color: #0B426E;
+}
+
+/* Legacy helper alias fallback */
+.bg-erp-blue {
+  background-color: #0B426E;
+}
+
+.text-erp-blue {
+  color: #0B426E;
+}
+
+.border-erp-blue {
+  border-color: #0B426E;
+}
+
+/* Smooth transitions */
+* {
+  transition-duration: 150ms;
 }

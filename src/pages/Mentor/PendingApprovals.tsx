@@ -1,54 +1,53 @@
-import React, { useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import React from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { useMentorPendingRequests, useMentorReviewMutation } from '../../hooks/useODRequests';
 import { MentorApprovalTable } from '../../components/tables/MentorApprovalTable';
-import { RejectionModal } from '../../components/modals/RejectionModal';
+import { Loader } from '../../components/common/Loader';
 
 export const PendingApprovals: React.FC = () => {
-  const { requests, updateMentorStatus } = useApp();
-  const [rejectId, setRejectId] = useState<string | null>(null);
-
-  // Filter requests pending mentor review
-  const pendingRequests = requests.filter(
-    (r) => r.mentorStatus === 'PENDING'
+  const { userProfile } = useAuth();
+  const { data: requests = [], isLoading } = useMentorPendingRequests(
+    userProfile?.uid,
+    userProfile?.email
   );
+  const mentorReviewMutation = useMentorReviewMutation();
 
-  const handleApprove = (id: string) => {
-    updateMentorStatus(id, 'APPROVED');
+  const handleApprove = (odId: string) => {
+    if (!userProfile) return;
+    mentorReviewMutation.mutate({
+      odId,
+      decision: 'APPROVED',
+      mentor: userProfile,
+    });
   };
 
-  const handleRejectTrigger = (id: string) => {
-    setRejectId(id);
-  };
-
-  const handleRejectSubmit = (reason: string) => {
-    if (rejectId) {
-      updateMentorStatus(rejectId, 'REJECTED', reason);
-      setRejectId(null);
-    }
+  const handleReject = (odId: string, reason: string) => {
+    if (!userProfile) return;
+    mentorReviewMutation.mutate({
+      odId,
+      decision: 'REJECTED',
+      mentor: userProfile,
+      rejectionReason: reason,
+    });
   };
 
   return (
-    <div className="space-y-6 text-left">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-zinc-100 m-0">
-          Mentor Pending Approvals
-        </h1>
-        <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-          Review and approve OD applications submitted by students in your mentorship batch.
-        </p>
+    <div className="space-y-4">
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">Faculty Mentor - Pending OD Approvals</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Review and approve or reject OD requests submitted by your assigned mentees.</p>
       </div>
 
-      <MentorApprovalTable
-        data={pendingRequests}
-        onApprove={handleApprove}
-        onRejectTrigger={handleRejectTrigger}
-      />
-
-      <RejectionModal
-        isOpen={rejectId !== null}
-        onClose={() => setRejectId(null)}
-        onSubmit={handleRejectSubmit}
-      />
+      {isLoading ? (
+        <Loader label="Loading assigned mentee OD applications..." />
+      ) : (
+        <MentorApprovalTable
+          requests={requests}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          isLoading={mentorReviewMutation.isPending}
+        />
+      )}
     </div>
   );
 };

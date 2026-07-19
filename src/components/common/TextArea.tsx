@@ -12,28 +12,28 @@ export const TextArea: React.FC<TextAreaProps> = ({
   id,
   ...props
 }) => {
-  const areaId = id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
+  const areaId = id || `textarea-${Math.random().toString(36).substring(2, 9)}`;
 
   return (
     <div className="w-full text-left">
       {label && (
-        <label htmlFor={areaId} className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">
+        <label htmlFor={areaId} className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}
         </label>
       )}
       <textarea
         id={areaId}
-        className={`w-full px-3 py-2 border rounded-lg text-sm transition-all duration-200 outline-none
-          focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-          bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700
-          text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500
-          disabled:bg-gray-50 dark:disabled:bg-zinc-950 disabled:text-gray-400
+        className={`w-full px-3 py-2 border rounded-md text-xs sm:text-sm transition-colors duration-150 outline-none
+          focus:ring-1 focus:ring-[#0B426E] focus:border-[#0B426E]
+          bg-gray-50 dark:bg-gray-700/80 border-gray-300 dark:border-gray-600
+          text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400
+          disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400
           ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
           ${className}`}
         {...props}
       />
       {error && (
-        <p className="mt-1 text-xs text-red-500">{error}</p>
+        <p className="mt-1 text-[11px] text-red-600 font-normal">{error}</p>
       )}
     </div>
   );

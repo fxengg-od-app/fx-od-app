@@ -2,62 +2,84 @@ import React from 'react';
 import { Badge } from '../common/Badge';
 import type { ODRequest } from '../../context/AppContext';
 import { EmptyState } from '../common/EmptyState';
+import { User } from 'lucide-react';
 
 interface StudentTableProps {
   data: ODRequest[];
 }
 
 export const StudentTable: React.FC<StudentTableProps> = ({ data }) => {
+  if (data.length === 0) {
+    return (
+      <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-xs">
+        <EmptyState
+          title="No Students on Duty Today"
+          description="There are currently no approved OD applications active for today's date."
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden shadow-xs">
-      <div className="overflow-x-auto">
-        {data.length === 0 ? (
-          <div className="p-8">
-            <EmptyState
-              title="No Students on Duty Today"
-              description="There are currently no approved OD applications active for today's date."
-            />
+    <div className="space-y-3">
+      {/* Mobile Card Layout (< md) */}
+      <div className="space-y-2.5 md:hidden">
+        {data.map((student) => (
+          <div
+            key={student.id}
+            className="p-3.5 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 shadow-xs flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-md bg-[#0B426E] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h4 className="font-semibold text-xs text-gray-900 dark:text-white truncate">
+                  {student.name}
+                </h4>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">
+                  Reg: {student.registerNumber} • Yr {student.year} ({student.section})
+                </p>
+              </div>
+            </div>
+
+            <Badge status={student.finalStatus} />
           </div>
-        ) : (
-          <table className="min-w-full divide-y divide-gray-100 dark:divide-zinc-800 text-left text-xs sm:text-sm">
-            <thead className="bg-gray-50 dark:bg-zinc-900/50">
+        ))}
+      </div>
+
+      {/* Desktop Table Layout (>= md) */}
+      <div className="hidden md:block w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700 text-left text-xs">
+            <thead className="bg-gray-50 dark:bg-gray-800 uppercase font-semibold text-[11px] text-gray-600 dark:text-gray-300">
               <tr>
-                <th className="px-6 py-3.5 font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Register Number
-                </th>
-                <th className="px-6 py-3.5 font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3.5 font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Year
-                </th>
-                <th className="px-6 py-3.5 font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Section
-                </th>
-                <th className="px-6 py-3.5 font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Status
-                </th>
+                <th className="px-4 py-3">Register Number</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Year</th>
+                <th className="px-4 py-3">Section</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60 text-gray-700 dark:text-gray-200">
               {data.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/20 transition-all">
-                  <td className="px-6 py-4 font-mono font-semibold text-gray-900 dark:text-zinc-150">
+                <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
+                  <td className="px-4 py-3 font-mono font-semibold text-[#0B426E] dark:text-blue-300">
                     {student.registerNumber}
                   </td>
-                  <td className="px-6 py-4 font-bold text-gray-800 dark:text-zinc-200">
+                  <td className="px-4 py-3 font-bold text-gray-900 dark:text-white">
                     {student.name}
                   </td>
-                  <td className="px-6 py-4 text-gray-500 dark:text-zinc-400">{student.year}</td>
-                  <td className="px-6 py-4 text-gray-500 dark:text-zinc-400">{student.section}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{student.year}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{student.section}</td>
+                  <td className="px-4 py-3">
                     <Badge status={student.finalStatus} />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
+        </div>
       </div>
     </div>
   );
